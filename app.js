@@ -57,46 +57,41 @@ router.get(
 app.get(
   "/api/courses",
   asyncHandler(async (req, res) => {
-    const courses = await Course.findAll({
-      include: [{ model: User, as: "User" }], //show user data
-    });
+    const courses = await Course.findAll();
     res.status(200).json(courses);
   }),
 );
 
+//set the handlers correctly
 app.post(
   "/api/courses",
   asyncHandler(async (req, res, next) => {
-    const { title, description, estimatedTime, materialsNeeded, userId } =
-      req.body;
-
-    if (
-      !title ||
-      !description ||
-      !estimatedTime ||
-      !materialsNeeded ||
-      !userId
-    ) {
-      return res.status(400).json({
-        message:
-          "title, description, estimatedTime ,materialsNeeded, userId are required",
+    try {
+      const { title, description, estimatedTime, materialsNeeded, userId } =
+        req.body;
+      const user = await User.findByPk(userId); //find by primary key, allways need to pass the primary column, normally the id
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      const course = await Course.create({
+        title,
+        description,
+        estimatedTime,
+        materialsNeeded,
+        userId,
       });
+      res.status(201).json(course);
+    } catch (error) {
+      if (
+        error.name === "SequelizeValidationError" ||
+        error.name === "SequelizeUniqueConstraintError"
+      ) {
+        const errors = error.errors.map((err) => err.message); //shows each error depending on the incorrect fields
+        res.status(400).json({ errors });
+      } else {
+        throw error;
+      }
     }
-
-    const user = await User.findByPk(userId); //find by primary key, allways need to pass the primary column, normally the id
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    const course = await Course.create({
-      title,
-      description,
-      estimatedTime,
-      materialsNeeded,
-      userId,
-    });
-    res.status(201).json(course);
   }),
 );
 
@@ -115,12 +110,30 @@ app.get(
 app.put(
   "/api/courses/:id",
   asyncHandler(async (req, res) => {
-    const course = await Course.findByPk(req.params.id);
-    if (!course) {
-      return res.status(404).json({ message: "Course not found" });
+    try {
+      const course = await Course.findByPk(req.params.id);
+      if (!course) {
+        return res.status(400).json({ message: "Course not found" });
+      }
+
+      course.set({
+        title: req.body.title ?? null,
+        description: req.body.description ?? null,
+      });
+      await course.validate({ fields: ["title", "description"] }); // validate propierties with the model validators
+      await course.update(req.body);
+      res.status(200).json(course);
+    } catch (error) {
+      if (
+        error.name === "SequelizeValidationError" ||
+        error.name === "SequelizeUniqueConstraintError"
+      ) {
+        const errors = error.errors.map((err) => err.message);
+        res.status(400).json({ errors });
+      } else {
+        throw error;
+      }
     }
-    await course.update(req.body); //winth update method pass the req.body, there the data from client gets saved
-    res.status(200).json(course);
   }),
 );
 
