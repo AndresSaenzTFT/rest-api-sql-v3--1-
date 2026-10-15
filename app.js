@@ -4,6 +4,7 @@
 const express = require("express");
 const morgan = require("morgan");
 const router = express.Router();
+const { authenticateUser } = require("./middleware/auth-user");
 // variable to enable global error logging
 const enableGlobalErrorLogging =
   process.env.ENABLE_GLOBAL_ERROR_LOGGING === "true";
@@ -48,9 +49,10 @@ router.post(
 
 router.get(
   "/api/users",
+  authenticateUser,
   asyncHandler(async (req, res) => {
     const users = await User.findAll();
-    res.status(200).json(users);
+    res.status(200).json(users); // retrieves all users
   }),
 );
 //get all courses
@@ -65,6 +67,7 @@ app.get(
 //set the handlers correctly
 app.post(
   "/api/courses",
+  authenticateUser,
   asyncHandler(async (req, res, next) => {
     try {
       const { title, description, estimatedTime, materialsNeeded, userId } =
@@ -109,6 +112,7 @@ app.get(
 //update the following course
 app.put(
   "/api/courses/:id",
+  authenticateUser,
   asyncHandler(async (req, res) => {
     try {
       const course = await Course.findByPk(req.params.id);
@@ -140,6 +144,7 @@ app.put(
 //delete course
 app.delete(
   "/api/courses/:id",
+  authenticateUser,
   asyncHandler(async (req, res) => {
     const course = await Course.findByPk(req.params.id);
     if (!course) {
