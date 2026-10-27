@@ -5,6 +5,7 @@ const { User } = require("../models");
 const { asyncHandler } = require("./async-handler");
 const bcrypt = require("bcrypt");
 
+//authenticate users middleware
 exports.authenticateUser = asyncHandler(async (req, res, next) => {
   const credentials = parseBasicAuth(req.headers.authorization);
 

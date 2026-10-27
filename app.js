@@ -32,7 +32,7 @@ router.post(
   asyncHandler(async (req, res) => {
     try {
       await User.create(req.body);
-      res.status(201).json({ message: "Account successfully created!" });
+      res.location("/").status(201).end(); //response location set only to  /
     } catch (error) {
       if (
         error.name === "SequelizeValidationError" ||
@@ -51,15 +51,26 @@ router.get(
   "/api/users",
   authenticateUser,
   asyncHandler(async (req, res) => {
-    const users = await User.findAll();
-    res.status(200).json(users); // retrieves all users
+    // in req.currentUser, the authenticated user data is stored
+    const { id, firstName, lastName, emailAddress } = req.currentUser; //declare the propierties of the usersobject
+
+    res.status(200).json({ id, firstName, lastName, emailAddress }); // display the authenticated user
   }),
 );
+
 //get all courses
 app.get(
   "/api/courses",
   asyncHandler(async (req, res) => {
-    const courses = await Course.findAll();
+    const courses = await Course.findAll({
+      include: [
+        {
+          model: User,
+          as: "User",
+          attributes: { exclude: ["password"] },
+        },
+      ],
+    });
     res.status(200).json(courses);
   }),
 );
@@ -70,20 +81,17 @@ app.post(
   authenticateUser,
   asyncHandler(async (req, res, next) => {
     try {
-      const { title, description, estimatedTime, materialsNeeded, userId } =
-        req.body;
-      const user = await User.findByPk(userId); //find by primary key, allways need to pass the primary column, normally the id
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
+      const { title, description, estimatedTime, materialsNeeded } = req.body;
+
       const course = await Course.create({
         title,
         description,
         estimatedTime,
         materialsNeeded,
-        userId,
+        userId: req.currentUser.id, // now the course created will assign the authenticated user to the course created
       });
-      res.status(201).json(course);
+
+      res.location(`/api/courses/${course.id}`).status(201).end(); // for this res header i set up the path to retrieve the course thar has been created
     } catch (error) {
       if (
         error.name === "SequelizeValidationError" ||
@@ -103,7 +111,13 @@ app.get(
   "/api/courses/:id",
   asyncHandler(async (req, res, next) => {
     const course = await Course.findByPk(req.params.id, {
-      include: [{ model: User, as: "User" }], //show user data
+      include: [
+        {
+          model: User,
+          as: "User",
+          attributes: { exclude: ["password"] },
+        },
+      ], //show user data
     }); //look for the course by its id
     res.status(200).json(course);
   }),
@@ -126,7 +140,7 @@ app.put(
       });
       await course.validate({ fields: ["title", "description"] }); // validate propierties with the model validators
       await course.update(req.body);
-      res.status(200).json(course);
+      res.status(204).end(); //204 status and not showing any json
     } catch (error) {
       if (
         error.name === "SequelizeValidationError" ||

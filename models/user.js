@@ -84,6 +84,7 @@ module.exports = (sequelize, DataTypes) => {
       },
     },
     {
+      //hashed password stored in password column
       sequelize,
       modelName: "User",
       hooks: {
@@ -93,5 +94,16 @@ module.exports = (sequelize, DataTypes) => {
       },
     },
   );
+
+  User.associate = (models) => {
+    User.hasMany(models.Course, {
+      as: "User",
+      foreignKey: {
+        fieldName: "userId",
+        allowNull: false,
+      },
+    });
+  };
+
   return User;
 };
