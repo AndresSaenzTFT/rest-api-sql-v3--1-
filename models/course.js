@@ -39,12 +39,12 @@ module.exports = (sequelize, DataTypes) => {
         },
       },
       estimatedTime: {
+        //allow null true by default
         type: DataTypes.STRING,
-        allowNull: false,
       },
       materialsNeeded: {
+        //allow null true by default
         type: DataTypes.STRING,
-        allowNull: false,
       },
     },
     {
