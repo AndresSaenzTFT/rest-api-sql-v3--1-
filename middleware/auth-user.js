@@ -3,6 +3,7 @@
 const { parse: parseBasicAuth } = require("basic-auth"); //import basic-auth
 const { User } = require("../models");
 const { asyncHandler } = require("./async-handler");
+const bcrypt = require("bcrypt");
 
 //authenticate users middleware
 exports.authenticateUser = asyncHandler(async (req, res, next) => {
@@ -16,7 +17,7 @@ exports.authenticateUser = asyncHandler(async (req, res, next) => {
     where: { emailAddress: credentials.name },
   });
 
-  if (!user || credentials.pass !== user.password) {
+  if (!user || !(await bcrypt.compare(credentials.pass, user.password))) {
     return res.status(401).json({ message: "Access Denied" });
   }
 
