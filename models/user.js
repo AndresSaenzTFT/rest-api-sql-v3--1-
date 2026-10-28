@@ -1,6 +1,5 @@
 "use strict";
 const { Model } = require("sequelize");
-const bcrypt = require("bcrypt");
 
 module.exports = (sequelize, DataTypes) => {
   class User extends Model {
@@ -70,28 +69,10 @@ module.exports = (sequelize, DataTypes) => {
           },
         },
       },
-      confirmedPassword: {
-        type: DataTypes.VIRTUAL,
-        allowNull: false,
-        validate: {
-          notNull: { msg: "Please confirm your password" },
-          isConfirmed(value) {
-            if (value !== this.password) {
-              throw new Error("Both passwords must match");
-            }
-          },
-        },
-      },
     },
     {
-      //hashed password stored in password column
       sequelize,
       modelName: "User",
-      hooks: {
-        beforeCreate: async (user) => {
-          user.password = await bcrypt.hash(user.password, 10);
-        },
-      },
     },
   );
 
