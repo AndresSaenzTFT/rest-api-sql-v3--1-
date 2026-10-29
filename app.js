@@ -32,7 +32,7 @@ router.post(
   asyncHandler(async (req, res) => {
     try {
       await User.create(req.body);
-      res.location("/").status(201).end(); //response location set only to  / and response set correctly
+      res.location("/").status(201).end(); //response location set only to  / and response set correctly to 201
     } catch (error) {
       if (
         error.name === "SequelizeValidationError" ||
@@ -165,7 +165,7 @@ app.delete(
       return res.status(404).json({ message: "Course not found" });
     }
     await course.destroy();
-    res.status(200).end();
+    res.status(204).end();
   }),
 );
 

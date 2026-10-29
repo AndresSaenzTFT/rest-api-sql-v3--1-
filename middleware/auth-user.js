@@ -7,8 +7,12 @@ const bcrypt = require("bcrypt");
 
 //authenticate users middleware
 exports.authenticateUser = asyncHandler(async (req, res, next) => {
-  const credentials = parseBasicAuth(req.headers.authorization);
+  const authorization = req.headers.authorization;
+  if (!authorization) {
+    return res.status(401).json({ message: "Access Denied" });
+  }
 
+  const credentials = parseBasicAuth(authorization);
   if (!credentials) {
     return res.status(401).json({ message: "Access Denied" });
   }
